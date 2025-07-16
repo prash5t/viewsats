@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}ViewSats - Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="visualization">
+        <div id="earth-container"></div>
+        <div class="controls">
+            <div class="satellite-count">
+                <span id="activeCount">0</span> satellites tracked
+            </div>
+            <div class="last-update">
+                Last update: <span id="lastUpdate">Never</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="satellite-list">
+        <div class="list-header">
+            <h2>Active Satellites</h2>
+            <div class="list-controls">
+                <input type="text" id="searchInput" placeholder="Search satellites...">
+                <select id="sortSelect">
+                    <option value="name">Sort by Name</option>
+                    <option value="norad">Sort by NORAD ID</option>
+                    <option value="updated">Sort by Last Update</option>
+                </select>
+            </div>
+        </div>
+        <div id="satelliteList" class="list-content">
+            <!-- Satellites will be populated here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/earth.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %} 

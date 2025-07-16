@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}ViewSats - {{ satellite.object_name }}{% endblock %}
+
+{% block content %}
+<div class="satellite-detail">
+    <div class="detail-header">
+        <h1>{{ satellite.object_name }}</h1>
+        <div class="metadata">
+            <span class="norad-id">NORAD ID: {{ satellite.norad_id }}</span>
+            <span class="object-id">Object ID: {{ satellite.object_id }}</span>
+        </div>
+    </div>
+
+    <div class="detail-content">
+        <div class="orbital-info">
+            <h2>Orbital Parameters</h2>
+            <div class="parameter">
+                <label>Inclination:</label>
+                <span>{{ "%.2f"|format(satellite.inclination) }}°</span>
+            </div>
+            <div class="parameter">
+                <label>Eccentricity:</label>
+                <span>{{ "%.6f"|format(satellite.eccentricity) }}</span>
+            </div>
+            <div class="parameter">
+                <label>Mean Motion:</label>
+                <span>{{ "%.6f"|format(satellite.mean_motion) }} revs/day</span>
+            </div>
+            <div class="parameter">
+                <label>B* Drag Term:</label>
+                <span>{{ "%.6e"|format(satellite.bstar) }}</span>
+            </div>
+            <div class="parameter">
+                <label>Epoch:</label>
+                <span>{{ satellite.epoch.strftime('%Y-%m-%d %H:%M:%S UTC') }}</span>
+            </div>
+        </div>
+
+        <div class="position-info">
+            <h2>Current Position</h2>
+            <div id="position-map"></div>
+            <div class="current-coords">
+                <div class="coord">
+                    <label>Latitude:</label>
+                    <span id="currentLat">Loading...</span>
+                </div>
+                <div class="coord">
+                    <label>Longitude:</label>
+                    <span id="currentLon">Loading...</span>
+                </div>
+                <div class="coord">
+                    <label>Altitude:</label>
+                    <span id="currentAlt">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const NORAD_ID = {{ satellite.norad_id }};
+</script>
+<script src="{{ url_for('static', filename='js/satellite-detail.js') }}"></script>
+{% endblock %} 

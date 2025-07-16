@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}ViewSats - Not Found{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <h1>404 - Not Found</h1>
+    <p>The requested satellite could not be found.</p>
+    <a href="{{ url_for('main.index') }}" class="btn">Return to Dashboard</a>
+</div>
+{% endblock %} 
