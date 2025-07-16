@@ -1,0 +1,32 @@
+from flask import Flask
+from flask.cli import load_dotenv
+from config import Config
+
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+
+    # Initialize extensions
+    from app.extensions import db, scheduler
+    db.init_app(app)
+    scheduler.init_app(app)
+
+    # Register blueprints
+    from app.api import bp as api_bp
+    app.register_blueprint(api_bp, url_prefix='/api')
+
+    from app.main import bp as main_bp
+    app.register_blueprint(main_bp)
+
+    @app.before_first_request
+    def initialize_application():
+        # Create database tables
+        with app.app_context():
+            db.create_all()
+
+        # Start the scheduler
+        if not scheduler.running:
+            scheduler.start()
+
+    return app
