@@ -25,8 +25,8 @@ def create_app(config_class=Config):
         with app.app_context():
             db.create_all()
 
-        # Start the scheduler
-        if not scheduler.running:
-            scheduler.start()
+        # Initialize scheduler
+        from app.services import init_scheduler
+        init_scheduler()
 
     return app
