@@ -19,11 +19,9 @@ def create_app(config_class=Config):
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
 
-    @app.before_first_request
-    def initialize_application():
-        # Create database tables
-        with app.app_context():
-            db.create_all()
+    # Initialize database and scheduler
+    with app.app_context():
+        db.create_all()
 
         # Initialize scheduler
         from app.services import init_scheduler

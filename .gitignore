@@ -1,0 +1,10 @@
+__pycache__/
+.venv/
+.env
+.DS_Store
+.idea/
+.pytest_cache/
+.coverage
+.coverage.*
+.coverage.*.*
+.coverage.*.*.*
