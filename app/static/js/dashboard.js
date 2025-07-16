@@ -2,7 +2,8 @@ class DashboardManager {
     constructor() {
         this.satellites = [];
         this.filteredSatellites = [];
-        this.updateInterval = 60000; // 1 minute
+        this.updateInterval = 300000; // 5 minutes for satellite list
+        this.positionInterval = 30000; // 30 seconds for position updates
         
         this.initializeElements();
         this.setupEventListeners();
@@ -23,8 +24,12 @@ class DashboardManager {
     }
     
     startPeriodicUpdates() {
+        // Initial fetch
         this.fetchSatellites();
+        
+        // Set up periodic updates
         setInterval(() => this.fetchSatellites(), this.updateInterval);
+        setInterval(() => this.updatePositions(), this.positionInterval);
     }
     
     async fetchSatellites() {
@@ -51,11 +56,13 @@ class DashboardManager {
                 .slice(0, 100) // Limit to prevent overloading
                 .map(sat => sat.norad_id)
                 .join(',');
+                
+            if (!visibleIds) return;
             
             const response = await fetch(`${API.POSITIONS}?norad_ids=${visibleIds}`);
             const data = await response.json();
             
-            // Update Earth visualization
+            // Update Earth visualization with smooth transition
             if (window.earthVis) {
                 window.earthVis.updateSatellites(data.positions);
             }

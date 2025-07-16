@@ -28,9 +28,20 @@ class EarthVisualization {
             .attr('class', 'ocean')
             .style('fill', '#a4d1e3');
             
-        // Create groups for land and satellites
+        // Create groups for land, graticule, and satellites
+        this.graticuleGroup = this.svg.append('g');
         this.landGroup = this.svg.append('g');
         this.satelliteGroup = this.svg.append('g');
+        
+        // Add graticule
+        const graticule = d3.geoGraticule();
+        this.graticuleGroup.append('path')
+            .datum(graticule)
+            .attr('class', 'graticule')
+            .attr('d', this.path)
+            .style('fill', 'none')
+            .style('stroke', '#ccc')
+            .style('stroke-width', '0.2px');
     }
     
     async loadWorldData() {
@@ -56,17 +67,47 @@ class EarthVisualization {
     setupRotation() {
         let rotationSpeed = 0.2;
         let lastTime = d3.now();
+        let isDragging = false;
+        let dragStart = null;
+        
+        // Add drag behavior
+        const drag = d3.drag()
+            .on('start', (event) => {
+                isDragging = true;
+                dragStart = [event.x, event.y];
+            })
+            .on('drag', (event) => {
+                if (dragStart) {
+                    const rotation = this.projection.rotate();
+                    const dx = event.x - dragStart[0];
+                    const dy = event.y - dragStart[1];
+                    rotation[0] += dx * 0.5;
+                    rotation[1] -= dy * 0.5;
+                    rotation[1] = Math.max(-90, Math.min(90, rotation[1]));
+                    this.projection.rotate(rotation);
+                    this.updateVisualization();
+                    dragStart = [event.x, event.y];
+                }
+            })
+            .on('end', () => {
+                isDragging = false;
+                dragStart = null;
+            });
+            
+        this.svg.call(drag);
         
         const rotate = () => {
-            const now = d3.now();
-            const diff = now - lastTime;
-            lastTime = now;
-            
-            const rotation = this.projection.rotate();
-            rotation[0] += rotationSpeed * diff / 50;
-            
-            this.projection.rotate(rotation);
-            this.updateVisualization();
+            if (!isDragging) {
+                const now = d3.now();
+                const diff = now - lastTime;
+                lastTime = now;
+                
+                const rotation = this.projection.rotate();
+                rotation[0] += rotationSpeed * diff / 50;
+                
+                this.projection.rotate(rotation);
+                this.updateVisualization();
+            }
             
             requestAnimationFrame(rotate);
         };
@@ -80,22 +121,39 @@ class EarthVisualization {
     }
     
     updateVisualization() {
-        // Update land
+        // Update land and graticule
         this.landGroup.selectAll('path').attr('d', this.path);
+        this.graticuleGroup.selectAll('path').attr('d', this.path);
         
         // Update satellites
-        const satelliteMarkers = this.satelliteGroup.selectAll('circle')
+        const satelliteMarkers = this.satelliteGroup.selectAll('g')
             .data(this.satellites, d => d.norad_id);
             
         // Remove old satellites
         satelliteMarkers.exit().remove();
         
         // Add new satellites
-        satelliteMarkers.enter()
-            .append('circle')
-            .merge(satelliteMarkers)
+        const newSatellites = satelliteMarkers.enter()
+            .append('g')
+            .attr('class', 'satellite');
+            
+        // Add satellite dots
+        newSatellites.append('circle')
             .attr('r', 3)
             .style('fill', '#e74c3c')
+            .style('stroke', '#fff')
+            .style('stroke-width', '0.5px');
+            
+        // Add altitude rings
+        newSatellites.append('circle')
+            .attr('class', 'altitude-ring')
+            .style('fill', 'none')
+            .style('stroke', '#e74c3c')
+            .style('stroke-width', '0.5px')
+            .style('stroke-opacity', '0.3');
+            
+        // Update all satellites (new and existing)
+        this.satelliteGroup.selectAll('g.satellite')
             .attr('transform', d => {
                 const coords = this.projection([d.lon, d.lat]);
                 return coords ? `translate(${coords})` : null;
@@ -103,13 +161,28 @@ class EarthVisualization {
             .style('display', d => {
                 const coords = this.projection([d.lon, d.lat]);
                 return this.isVisible(coords) ? null : 'none';
+            })
+            .each((d, i, nodes) => {
+                // Update altitude ring size based on altitude
+                const altitudeScale = d.alt_km / 1000; // Scale factor for visualization
+                d3.select(nodes[i])
+                    .select('.altitude-ring')
+                    .attr('r', 3 + altitudeScale);
             });
     }
     
     isVisible(coords) {
         if (!coords) return false;
-        const [x, y] = coords;
-        return x >= 0 && x <= this.width && y >= 0 && y <= this.height;
+        
+        // Get the current rotation
+        const rotation = this.projection.rotate();
+        const [lon, lat] = [-rotation[0], -rotation[1]];
+        
+        // Calculate the great circle distance between the point and the center of the visible hemisphere
+        const distance = d3.geoDistance([lon, lat], [coords[0], coords[1]]);
+        
+        // Point is visible if it's less than 90 degrees from the center of the visible hemisphere
+        return distance <= Math.PI / 2;
     }
 }
 

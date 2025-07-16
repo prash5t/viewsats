@@ -2,6 +2,7 @@ from datetime import datetime
 from skyfield.api import load, EarthSatellite
 from skyfield.timelib import Time
 from app.utils import get_satellite
+from flask import current_app
 
 
 def calculate_positions(norad_ids):
@@ -25,10 +26,17 @@ def calculate_positions(norad_ids):
             continue
 
         try:
+            # Get TLE data
+            tle_data = satellite.tle_data
+            if not tle_data or 'TLE_LINE1' not in tle_data or 'TLE_LINE2' not in tle_data:
+                current_app.logger.warning(
+                    f"Missing TLE data for satellite {norad_id}")
+                continue
+
             # Create Skyfield satellite object from TLE data
             satrec = EarthSatellite(
-                satellite.raw_json['TLE_LINE1'],
-                satellite.raw_json['TLE_LINE2'],
+                tle_data['TLE_LINE1'],
+                tle_data['TLE_LINE2'],
                 satellite.object_name,
                 ts
             )
@@ -45,7 +53,8 @@ def calculate_positions(norad_ids):
             })
 
         except Exception as e:
-            # Log error and skip this satellite
+            current_app.logger.error(
+                f"Error calculating position for satellite {norad_id}: {str(e)}")
             continue
 
     return {

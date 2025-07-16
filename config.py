@@ -13,7 +13,7 @@ class Config:
 
     # CelesTrak API configuration
     CELESTRAK_API_URL = 'https://celestrak.org/NORAD/elements/gp.php'
-    CELESTRAK_UPDATE_INTERVAL = 60  # seconds
+    CELESTRAK_UPDATE_INTERVAL = 300  # 5 minutes instead of 1 minute
 
     # Scheduler configuration
     SCHEDULER_API_ENABLED = True

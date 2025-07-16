@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from app.extensions import db
 
 
@@ -32,6 +33,17 @@ class Satellite(db.Model):
             'last_updated': self.last_updated.isoformat() + 'Z' if self.last_updated else None
         }
 
+    @property
+    def tle_data(self):
+        """Get the TLE data from raw_json"""
+        if not self.raw_json:
+            return None
+        try:
+            data = json.loads(self.raw_json)
+            return data
+        except (json.JSONDecodeError, TypeError):
+            return None
+
     @staticmethod
     def from_celestrak_json(data):
         """Create or update a Satellite instance from CelesTrak JSON data"""
@@ -47,6 +59,6 @@ class Satellite(db.Model):
             'eccentricity': float(data.get('ECCENTRICITY', 0)),
             'mean_motion': float(data.get('MEAN_MOTION', 0)),
             'bstar': float(data.get('BSTAR', 0)),
-            'raw_json': str(data),
+            'raw_json': json.dumps(data),
             'last_updated': datetime.utcnow()
         }
